@@ -1,4 +1,6 @@
 import { View, Pressable, StyleSheet, Text } from 'react-native'
+import WateringCanIcon from '../components/svgs/WaterCanIcon';
+
 
 export default function HomeScreen() {
   return (
@@ -9,7 +11,9 @@ export default function HomeScreen() {
 
       <View style={styles.bottomBar}>
         <Pressable style={styles.canButton} onPress={() => console.log('recording!')}>
-          {/* watering can SVG goes here */}
+          <Pressable style={styles.canButton}>
+            <WateringCanIcon size={32} color="#a8e070" />
+          </Pressable>
         </Pressable>
       </View>
     </View>
