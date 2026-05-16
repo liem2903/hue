@@ -1,5 +1,4 @@
 import { View } from "react-native";
-import { useState } from "react";
 import { PlantType, Stages } from "../../types/index";
 
 
