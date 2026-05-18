@@ -4,14 +4,14 @@ export type Stages = "Seedling" | "Growing" | "Blooming" | "Grown";
 
 export type Plant = {
     name: string 
-    emotions: EmotionScore 
+    emotions: EmotionScores 
     plantType: PlantType
 }
 
-export type EmotionScore = {
-    happiness: number
-    sadness: number
-    anger: number
-    anxiety: number
-    neutral: number
+export type EmotionScores = {
+  happy: number
+  sad: number
+  angry: number
+  neutral: number
+  anxious: number
 }
