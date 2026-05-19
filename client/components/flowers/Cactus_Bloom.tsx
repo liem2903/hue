@@ -1,14 +1,17 @@
-import { View } from "react-native";
-import { PlantType, Stages } from "../../types/index";
+import Seed from "../svgs/Seed";
+import CactusBloomSeedling from "../svgs/CactusBloom/Seedling";
+import CactusBloomDeveloping from "../svgs/CactusBloom/Developing";
+import CactusBloomDeveloped from "../svgs/CactusBloom/Developed";
+import { Stages } from "../../types";
 
+type Props = { stage: Stages; width?: number; height?: number };
 
-export default function Cactus_Bloom(stages: Stages) {  
-    return (
-        <View>
-            {stages === "Seedling" && <View style={{ width: 20, height: 20, backgroundColor: 'green', borderRadius: 10 }} />}
-            {stages === "Growing" && <View style={{ width: 40, height: 40, backgroundColor: 'green', borderRadius: 20 }} />}
-            {stages === "Blooming" && <View style={{ width: 60, height: 60, backgroundColor: 'green', borderRadius: 30 }} />}
-            {stages === "Grown" && <View style={{ width: 80, height: 80, backgroundColor: 'green', borderRadius: 40 }} />}
-        </View>
-    )
+export default function Cactus_Bloom({ stage, width, height }: Props) {
+  const svgs = {
+    Seedling: <Seed width={width} height={height} />,
+    Growing: <CactusBloomSeedling width={width} height={height} />,
+    Blooming: <CactusBloomDeveloping width={width} height={height} />,
+    Grown: <CactusBloomDeveloped width={width} height={height} />,
+  };
+  return svgs[stage];
 }
