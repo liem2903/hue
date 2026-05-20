@@ -11,173 +11,78 @@ import {
   Platform,
 } from "react-native";
 import WateringCanIcon from "../components/svgs/WaterCanIcon";
-import WeepingBellDeveloped from "@/components/svgs/WeepingBell/Developed";
-
+import PlantDisplay from "@/components/PlantDisplay";
 import StatsPanel from "@/components/StatsPanel";
-import { EmotionScores, Plant } from "../types";
-import { loadPlant, savePlant } from "@/utils/storage";
-import { useEffect, useRef, useState } from "react";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
-import axios from "axios";
+import { usePlant } from "@/hooks/usePlant";
+import { useSpeechInput } from "@/hooks/useSpeechInput";
+import { parseEmotion } from "@/utils/api";
+import { applyEmotionEntry } from "@/utils/emotions";
 
 export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [isPermitted, setIsPermitted] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingTranscript, setPendingTranscript] = useState("");
-  const [currentPoints, setCurrentPoints] = useState(0);
-  const [plant, setPlant] = useState<Plant | null>(null);
-  const [showNamePrompt, setShowNamePrompt] = useState(false);
-  const [newPlantName, setNewPlantName] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const pulseAnimation = useRef(new Animated.Value(1)).current;
-  const transcriptRef = useRef("");
 
-  const [emotions, setEmotions] = useState<EmotionScores>({
-    happy: 0,
-    sad: 0,
-    angry: 0,
-    neutral: 0,
-    anxious: 0,
-  });
+  const {
+    plant,
+    isLoading,
+    showNamePrompt,
+    newPlantName,
+    setNewPlantName,
+    currentPoints,
+    setCurrentPoints,
+    emotions,
+    setEmotions,
+    saveProgress,
+    createPlant,
+  } = usePlant();
 
-  useEffect(() => {
-    (async () => {
-      const loaded = await loadPlant();
-      if (!loaded) {
-        setShowNamePrompt(true);
-      } else {
-        setPlant(loaded);
-        setCurrentPoints(loaded.exp);
-        setEmotions(loaded.emotions);
-      }
-      setIsLoading(false);
-    })();
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      const { granted } =
-        await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      setIsPermitted(granted);
-    })();
-  }, []);
-
-  useSpeechRecognitionEvent("result", (event) => {
-    const text = event.results[0]?.transcript ?? "";
-    setTranscript(text);
-    transcriptRef.current = text;
-  });
-
-  useSpeechRecognitionEvent("end", () => {
-    setIsListening(false);
-    if (transcriptRef.current.trim().length > 0) {
-      setPendingTranscript(transcriptRef.current);
-      setShowConfirm(true);
-      transcriptRef.current = "";
-      setTranscript("");
-    }
-  });
-
-  useSpeechRecognitionEvent("error", (event) => {
-    console.error("You have not said anything", event.error);
-    setIsListening(false);
-  });
-
-  const createPlant = async () => {
-    const trimmed = newPlantName.trim();
-    if (!trimmed) return;
-    const newPlant: Plant = {
-      name: trimmed,
-      exp: 0,
-      stage: "Seedling",
-      plantType: "Sun Flower",
-      emotions: { happy: 0, sad: 0, angry: 0, neutral: 0, anxious: 0 },
-    };
-    try {
-      await savePlant(newPlant);
-      setPlant(newPlant);
-      setShowNamePrompt(false);
-    } catch (error) {
-      console.error("Failed to save plant:", error);
-    }
-  };
+  const {
+    isListening,
+    showConfirm,
+    setShowConfirm,
+    pendingTranscript,
+    setPendingTranscript,
+    pulseAnimation,
+    onRecordPress,
+  } = useSpeechInput();
 
   const sendToBackend = async () => {
     setShowConfirm(false);
     try {
-      const results = await axios.post(
-        `http://192.168.68.110:4000/api/claude/parse-emotion`,
-        {
-          prompt: pendingTranscript,
-        },
+      const emotionScores = await parseEmotion(pendingTranscript);
+      const { newEmotions, newPoints } = applyEmotionEntry(
+        emotions,
+        emotionScores,
+        currentPoints,
       );
-      setEmotions(results.data);
-      setCurrentPoints((prev) => Math.min(prev + 10, 200));
-      console.log(results.data);
+      setEmotions(newEmotions);
+      setCurrentPoints(newPoints);
+      await saveProgress(newEmotions, newPoints);
     } catch (error) {
       console.error("Error parsing emotion:", error);
     }
   };
 
-  const onRecordPress = async () => {
-    if (!isPermitted) {
-      alert("Microphone permission is required.");
-      return;
-    }
-    if (isListening) {
-      ExpoSpeechRecognitionModule.stop();
-    } else {
-      setTranscript("");
-      transcriptRef.current = "";
-      setIsListening(true);
-      ExpoSpeechRecognitionModule.start({
-        lang: "en-AU",
-        interimResults: true,
-        continuous: true,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (isListening) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnimation, {
-            toValue: 1.2,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnimation, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ]),
-      ).start();
-    } else {
-      pulseAnimation.setValue(1);
-    }
-  }, [isListening]);
-
-  const progress = Math.min(currentPoints / 200, 1);
-
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.loadingScreen]}>
-        <Text style={styles.loadingText}>○</Text>
+      <View style={styles.container}>
+        <PlantDisplay
+          plantType={null}
+          stage={null}
+          width={width}
+          height={height}
+        />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <WeepingBellDeveloped width={width} height={height} />
+      <PlantDisplay
+        plantType={plant?.plantType ?? null}
+        stage={plant?.stage ?? null}
+        width={width}
+        height={height}
+      />
 
       <View style={styles.header}>
         <View style={styles.growingTag}>
@@ -391,14 +296,6 @@ const styles = StyleSheet.create({
   sendText: {
     color: "#a8e070",
     fontSize: 15,
-  },
-  loadingScreen: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    color: "rgba(168,224,112,0.4)",
-    fontSize: 32,
   },
   centeredModalOverlay: {
     flex: 1,
