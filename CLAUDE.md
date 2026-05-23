@@ -25,11 +25,13 @@ cd client && npx expo start     # scan QR for device, press 'w' for web
 ## Environment Variables
 
 **`server/.env`**
+
 ```
 ANTHROPIC_API_KEY=...
 ```
 
 **`client/.env`**
+
 ```
 API-URL=http://<your-local-ip>   # e.g. http://192.168.68.110
 ```
@@ -62,13 +64,49 @@ SVGs live in `client/components/svgs/<PlantType>/` (one file per stage).
 
 ## Critical Files
 
-| File | Purpose |
-|------|---------|
-| `client/app/index.tsx` | Main screen — growth logic, speech input, API call |
-| `client/types/index.ts` | All shared TypeScript types (`Emotion`, `Plant`, `EmotionScores`, etc.) |
-| `client/constants/theme.ts` | Colors and typography |
-| `server/backend/claudeBusiness.js` | Anthropic SDK call and system prompt |
-| `server/routes.js` | API route definitions |
+| File                               | Purpose                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------------- |
+| `client/app/index.tsx`             | Main screen — growth logic, speech input, API call                      |
+| `client/types/index.ts`            | All shared TypeScript types (`Emotion`, `Plant`, `EmotionScores`, etc.) |
+| `client/constants/theme.ts`        | Colors and typography                                                   |
+| `server/backend/claudeBusiness.js` | Anthropic SDK call and system prompt                                    |
+| `server/routes.js`                 | API route definitions                                                   |
+
+## WSL2 Phone Setup (required every session)
+
+The Express server runs inside WSL2. The phone can only reach the Windows LAN IP (`192.168.68.110`), so Windows must forward port 4000 into WSL2. The WSL2 IP changes on restart, so redo steps 1–2 each time.
+
+Run these in **PowerShell (Admin)** — do not split commands across lines:
+
+**1. Get current WSL2 IP:**
+
+```powershell
+wsl -- ip addr show eth0 | findstr "inet "
+```
+
+**2. Update port-proxy rule** (replace `<wsl2-ip>` with IP from step 1):
+
+```powershell
+netsh interface portproxy delete v4tov4 listenport=4000 listenaddress=0.0.0.0
+```
+
+```powershell
+netsh interface portproxy add v4tov4 listenport=4000 connectaddress=<wsl2-ip> connectport=4000 listenaddress=0.0.0.0
+```
+
+**3. Start the Express server in WSL2** (most common cause of "not connected"):
+
+```bash
+cd server && npm run dev
+```
+
+**One-off setup** (only needed once — firewall rule for port 4000):
+
+```powershell
+netsh advfirewall firewall add rule name="WSL2 Port 4000" dir=in action=allow protocol=TCP localport=4000
+```
+
+**Verify** — open `http://192.168.68.110:4000` in the phone browser. Any response means it's working.
 
 ## Testing & Linting
 

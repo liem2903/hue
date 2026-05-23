@@ -1,25 +1,44 @@
-import { View, Pressable, StyleSheet, Text, Animated, Modal, TextInput, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native'
-import { EmotionScores } from '../types';
-import { useState } from 'react';
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  Text,
+  Animated,
+  Modal,
+  TextInput,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { EmotionScores } from "../types";
+import { useState } from "react";
 
 const EMOTION_COLORS: Record<keyof EmotionScores, string> = {
-  happy: '#a8e070',
-  sad: '#6ab0d4',
-  angry: '#e07070',
-  neutral: '#b0a8e0',
-  anxious: '#e0c870',
-}
+  happy: "#a8e070",
+  sad: "#6ab0d4",
+  angry: "#e07070",
+  neutral: "#b0a8e0",
+  anxious: "#e0c870",
+};
 
-
-export default function StatsPanel({ currentPoints, emotions }: { currentPoints: number, emotions: EmotionScores }) {
-  const progress = Math.min(currentPoints / 200, 1)
+export default function StatsPanel({
+  currentPoints,
+  emotions,
+}: {
+  currentPoints: number;
+  emotions: EmotionScores;
+}) {
+  const progress = Math.min(currentPoints / 200, 1);
+  const total = Object.values(emotions).reduce((sum, v) => sum + v, 0);
 
   return (
     <View style={statStyles.container}>
       <View style={statStyles.progressRow}>
         <Text style={statStyles.label}>GROWTH</Text>
         <View style={statStyles.progressTrack}>
-          <View style={[statStyles.progressFill, { width: `${progress * 100}%` }]} />
+          <View
+            style={[statStyles.progressFill, { width: `${progress * 100}%` }]}
+          />
         </View>
         <Text style={statStyles.label}>{currentPoints}/200</Text>
       </View>
@@ -28,20 +47,27 @@ export default function StatsPanel({ currentPoints, emotions }: { currentPoints:
         {(Object.keys(emotions) as (keyof EmotionScores)[]).map((key) => (
           <View key={key} style={statStyles.emotionCol}>
             <View style={statStyles.emotionTrack}>
-              <View style={[
-                statStyles.emotionFill,
-                { 
-                  height: `${(emotions[key] / 5) * 100}%`,
-                  backgroundColor: EMOTION_COLORS[key],
-                }
-              ]} />
+              <View
+                style={[
+                  statStyles.emotionFill,
+                  {
+                    height: `${total > 0 ? (emotions[key] / total) * 100 : 0}%`,
+                    backgroundColor: EMOTION_COLORS[key],
+                  },
+                ]}
+              />
             </View>
-            <Text style={statStyles.emotionLabel}>{key.slice(0, 3).toUpperCase()}</Text>
+            <Text style={statStyles.emotionLabel}>
+              {key.slice(0, 3).toUpperCase()}
+            </Text>
+            <Text style={statStyles.emotionPct}>
+              {total > 0 ? Math.round((emotions[key] / total) * 100) : 0}%
+            </Text>
           </View>
         ))}
       </View>
     </View>
-  )
+  );
 }
 
 const statStyles = StyleSheet.create({
@@ -51,53 +77,58 @@ const statStyles = StyleSheet.create({
     gap: 14,
   },
   progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   label: {
-    color: 'rgba(200,230,180,0.4)',
+    color: "rgba(200,230,180,0.4)",
     fontSize: 10,
     letterSpacing: 1.5,
   },
   progressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#a8e070',
+    height: "100%",
+    backgroundColor: "#a8e070",
     borderRadius: 2,
   },
   emotionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 8,
   },
   emotionCol: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 6,
   },
   emotionTrack: {
-    width: '100%',
+    width: "100%",
     height: 48,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 4,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
+    overflow: "hidden",
+    justifyContent: "flex-end",
   },
   emotionFill: {
-    width: '100%',
+    width: "100%",
     borderRadius: 4,
     opacity: 0.8,
   },
   emotionLabel: {
-    color: 'rgba(200,230,180,0.4)',
+    color: "rgba(200,230,180,0.4)",
     fontSize: 9,
     letterSpacing: 1,
   },
-})
+  emotionPct: {
+    color: "rgba(200,230,180,0.3)",
+    fontSize: 8,
+    letterSpacing: 0.5,
+  },
+});

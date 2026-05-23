@@ -16,6 +16,7 @@ import ClimbingVineDeveloped from "./svgs/ClimbingVine/Developed";
 import WeepingBellSeedling from "./svgs/WeepingBell/Seedling";
 import WeepingBellDeveloping from "./svgs/WeepingBell/Developing";
 import WeepingBellDeveloped from "./svgs/WeepingBell/Developed";
+import Seed from "./svgs/Seed";
 type SvgStage = "Seedling" | "Developing" | "Developed";
 
 const PLANT_COMPONENTS: Record<
@@ -134,6 +135,9 @@ export default function PlantDisplay({
 }: Props) {
   if (!plantType || !stage) {
     return <GrowingOrb width={width} height={height} />;
+  }
+  if (stage === "Seed") {
+    return <Seed width={width} height={height} />;
   }
   const Component = PLANT_COMPONENTS[plantType][toSvgStage(stage)];
   return <Component width={width} height={height} />;

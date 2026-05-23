@@ -7,5 +7,8 @@ export async function parseEmotion(text: string): Promise<EmotionScores> {
   const response = await axios.post(`${BASE_URL}/api/claude/parse-emotion`, {
     prompt: text,
   });
-  return response.data as EmotionScores;
+  
+  console.log(response);
+  
+  return response.data.data as EmotionScores;
 }
