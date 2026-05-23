@@ -5,7 +5,7 @@ export type PlantType =
   | "Sun Flower"
   | "Climbing Vine"
   | "Weeping Bell";
-export type Stages = "Seedling" | "Growing" | "Blooming" | "Grown";
+export type Stages = "Seed" | "Seedling" | "Growing" | "Blooming" | "Grown";
 
 export type Plant = {
   name: string;
@@ -21,4 +21,11 @@ export type EmotionScores = {
   angry: number;
   neutral: number;
   anxious: number;
+};
+
+export type EmotionKey = keyof EmotionScores;
+
+export type EvolutionPending = {
+  newStage: Stages;
+  candidates: PlantType[];
 };

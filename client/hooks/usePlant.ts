@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
-import { EmotionScores, Plant } from "@/types";
+import {
+  EmotionScores,
+  EvolutionPending,
+  Plant,
+  PlantType,
+  Stages,
+} from "@/types";
+import { getDominantCandidates } from "@/utils/emotions";
 import { loadPlant, savePlant } from "@/utils/storage";
+
+const NEXT_STAGE: Partial<Record<Stages, Stages>> = {
+  Seed: "Seedling",
+  Seedling: "Growing",
+  Growing: "Blooming",
+  Blooming: "Grown",
+};
 
 export function usePlant() {
   const [plant, setPlant] = useState<Plant | null>(null);
@@ -15,6 +29,8 @@ export function usePlant() {
     neutral: 0,
     anxious: 0,
   });
+  const [evolutionPending, setEvolutionPending] =
+    useState<EvolutionPending | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -33,11 +49,31 @@ export function usePlant() {
   const saveProgress = async (
     newEmotions: EmotionScores,
     newPoints: number,
+    didEvolve: boolean,
   ) => {
     if (!plant) return;
     const updated = { ...plant, emotions: newEmotions, exp: newPoints };
     await savePlant(updated);
     setPlant(updated);
+    if (didEvolve && plant.stage !== "Grown") {
+      const candidates = getDominantCandidates(newEmotions);
+      const nextStage = NEXT_STAGE[plant.stage];
+      if (nextStage) setEvolutionPending({ newStage: nextStage, candidates });
+    }
+  };
+
+  const confirmEvolution = async (chosenType: PlantType) => {
+    if (!plant || !evolutionPending) return;
+    const evolved: Plant = {
+      ...plant,
+      stage: evolutionPending.newStage,
+      plantType: chosenType,
+      exp: currentPoints,
+      emotions,
+    };
+    await savePlant(evolved);
+    setPlant(evolved);
+    setEvolutionPending(null);
   };
 
   const createPlant = async () => {
@@ -46,7 +82,7 @@ export function usePlant() {
     const newPlant: Plant = {
       name: trimmed,
       exp: 0,
-      stage: "Seedling",
+      stage: "Seed",
       plantType: "Sun Flower",
       emotions: { happy: 0, sad: 0, angry: 0, neutral: 0, anxious: 0 },
     };
@@ -72,5 +108,7 @@ export function usePlant() {
     setEmotions,
     saveProgress,
     createPlant,
+    evolutionPending,
+    confirmEvolution,
   };
 }
